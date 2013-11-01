@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
+
+# fail fast
+set -e
+
+# if any command in a pipe fails, kill the script (useful for indent)
+set -o pipefail
+
+indent() {
+  while read line; do
+    echo "       ${line}"
+  done
+}
+
+# config
+MONO_VERSION="2.10.8"
+XSP_VERSION="2.10.2"
+
+# s3 packages
+#MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/mono-${MONO_VERSION}.tgz"
+MONO_PACKAGE="http://192.168.2.103:8001/buildpack/mono/mono-2.10.8.tar.gz"
+XSP_PACKAGE="http://192.168.2.103:8001/buildpack/mono/xsp/xsp-2.10.2.tar.bz2"
+
+# important directories: https://gist.github.com/fe7f04abbd9538b656c5
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+# NOTE: the rest of this script assumes that we're in the build directory
+cd ${BUILD_DIR}
+
+# cache may not exist yet
+mkdir -p ${CACHE_DIR}/mono/lib/mono/gac/
+echo ${CACHE_DIR}
+echo "-----> Bundling Mono v${MONO_VERSION}"
+#if [ ! -d "${CACHE_DIR}/mono" ]; then
+  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
+  curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}/mono
+#fi
+cp -r "${CACHE_DIR}/mono" .
+
+ln -s "${CACHE_DIR}/mono" /app
+
+echo "Fetching XSP v${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
+curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar jxvf - -C ${CACHE_DIR}
+cd ${CACHE_DIR}/xsp-2.10.2
+export PKG_CONFIG_PATH=/app/mono/lib/pkgconfig
+export PATH="/app/mono/bin:${PATH}"
+./configure --prefix=/app/mono --with-runtime=/app/mono/bin/mono
+make
+make install
+
+
+
+# find a solution file
+SLN=$(find . -maxdepth 1 -iname "*.sln")
+if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
+  echo "-----> Too many *.sln files"
+  exit 1
+fi
+
+# compile an uploaded application
+if [ "${SLN}" != "" ]; then
+  echo "-----> Compiling Mono application"
+
+  # need Mono in its expected location for xbuild to work
+  #ln -s "${CACHE_DIR}/mono" /app
+
+  
+  ls /app/mono
+  
+  export PATH="/app/mono/bin:${PATH}"
+
+  #${CACHE_DIR}/bin/xbuild /property:Configuration=Release ${SLN} | indent
+  #xbuild  ${SLN} | indent
+fi
+
+echo "-----> Build SUCCESS"

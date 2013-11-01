@@ -1,0 +1,67 @@
+
+read template from "/home/test/Oracle/Middleware_Home/wlserver_10.34/common/templates/domains/wls.jar";
+//////////////////////////////////////////////////////////////////////////
+//Find and configure the Admin Server.
+/////////////////////////////////////////////////////////////////////////
+
+create Server "myserver" as s1;
+set s1.ListenAddress "";
+set s1.ListenPort "17001";
+set s1.SSL.Enabled "true";
+set s1.SSL.ListenPort "17002";
+//////////////////////////////////////////////////////////////////////////
+//Create a JMSQueue.
+//////////////////////////////////////////////////////////////////////////
+//A JMSServer has to be created first.
+
+create JMSServer "myJMSServer" as jmsserver;
+create JMSQueue "myJMSQueue" as myq;
+//required attribute
+set myq.JNDIName "jms/myjmsqueue";
+//required attribute
+set myq.JMSServer "myJMSServer";
+//optional attribute
+//set myq.StoreEnabled "false";
+//target "myJMSServer" to server "myserver"
+assign JMSServer "myJMSServer" to target "myserver";
+//////////////////////////////////////////////////////////////////////////
+//Create a JDBCConnectionPool.
+//////////////////////////////////////////////////////////////////////////
+
+create JDBCConnectionPool "demoPool" as mypool;
+//required attribute
+set mypool.DriverName "com.pointbase.jdbc.jdbcUniversalDriver";
+//required attribute
+set mypool.URL "jdbc:pointbase:server://localhost:9092/demo";
+//required attribute
+set mypool.Password "PBPUBLIC";
+//optional attribute (but it's recommended you set the db user...)
+set mypool.Properties "user=PBPUBLIC";
+//target all JDBC connection pools to server "myserver"
+assign JDBCConnectionPool "*" to target "myserver";
+//////////////////////////////////////////////////////////////////////////
+//target existing applications.
+//////////////////////////////////////////////////////////////////////////
+//target applications only when they exist in current domain template
+
+//assign application "*" to target "myserver";
+//////////////////////////////////////////////////////////////////////////
+//Find the admin user and set the password, since it has not been set in the 
+// template.
+//////////////////////////////////////////////////////////////////////////
+
+find User "weblogic" as u1;
+set u1.password "weblogic";
+//////////////////////////////////////////////////////////////////////////
+//Write out the domain.
+//////////////////////////////////////////////////////////////////////////
+
+set OverwriteDomain "true";
+
+
+write domain to "/home/test/domains/wls";
+//////////////////////////////////////////////////////////////////////////
+//Close domain template to indicate completion of work.
+//////////////////////////////////////////////////////////////////////////
+
+close template;
