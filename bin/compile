@@ -5,12 +5,6 @@
 # COMPILE_BUILDPACK_DIR，获取buildpack脚本所在的目录 https://github.com/tchenData/container-info-buildpack
 BUILD_DIR=$1
 CACHE_DIR=$2 
-COMPILE_BUILDPACK_DIR=$(cd $(dirname $0) && cd .. && pwd)
 
-# fail fast
-set -e
 
-# NOTE: the rest of this script assumes that we're in the cache/app directory
-cd ${CACHE_DIR}
-
-echo $COMPILE_BUILDPACK_DIR
+echo $CACHE_DIR
