@@ -11,11 +11,12 @@ COMPILE_BUILDPACK_DIR=$(cd $(dirname $0) && cd .. && pwd)
 set -e
 
 # NOTE: the rest of this script assumes that we're in the cache directory
-cd ${CACHE_DIR}
-
 if [ ! -d "${CACHE_DIR}/Oracle/software" ]; then
         mkdir -p $CACHE_DIR/Oracle/software
 fi
+
+cd ${CACHE_DIR}
+
 ln -s "${CACHE_DIR}" /app
 
 # install bea jrockit jdk
