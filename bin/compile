@@ -12,7 +12,7 @@ set -e
 
 # NOTE: the rest of this script assumes that we're in the cache directory
 if [ ! -d "${CACHE_DIR}/Oracle/software" ]; then
-        mkdir -p $CACHE_DIR/Oracle/software
+  mkdir -p $CACHE_DIR/Oracle/software
 fi
 
 cd ${CACHE_DIR}
@@ -23,18 +23,18 @@ ln -s "${CACHE_DIR}" /app
 JROCKIT_JDK_FILE=jrockit-jdk1.6.0_20-R28.1.0-4.0.1-linux-x64.bin
 JROCKIT_JDK_URL="http://192.168.2.103:8001/buildpack/jdk/jrockit-jdk1.6.0_20-R28.1.0-4.0.1-linux-x64.bin"
 if [ ! -d "${CACHE_DIR}/Oracle/jrockit-jdk1.6.0_20" ]; then
-        mkdir -p $CACHE_DIR/Oracle/jrockit-jdk1.6.0_20
+  mkdir -p $CACHE_DIR/Oracle/jrockit-jdk1.6.0_20
   echo -n "-----> Installing jrockit jdk ${JROCKIT_JDK_FILE}..."
-  curl --silent --location $JDK_JROCKIT_URL 
+  curl $JROCKIT_JDK_URL --silent -o -
   mv $JROCKIT_JDK_FILE $CACHE_DIR/Oracle/software
   
   chmod 777 $CACHE_DIR/Oracle/software/$JROCKIT_JDK_FILE
   ./Oracle/software/$JROCKIT_JDK_FILE -mode=silent -silent_xml=$COMPILE_BUILDPACK_DIR/config/silentForJRockit.xml
   
   export JAVA_HOME=/app/Oracle/jrockit-jdk1.6.0_20
-        export JRE_HOME=${JAVA_HOME}/jre
-        export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
-        export PATH=${JAVA_HOME}/bin:$PATH
+  export JRE_HOME=${JAVA_HOME}/jre
+  export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+  export PATH=${JAVA_HOME}/bin:$PATH
   echo " install of jrockit done"
 else
   echo "-----> jrockit already present"

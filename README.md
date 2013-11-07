@@ -1,4 +1,4 @@
 weblogic-buildpack
 ==================
 
-使用buildpack部署WebLogic应用
+deploy WebLogic app with buildpack
