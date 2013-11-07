@@ -1,78 +1,66 @@
 #!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
+# important directories: https://gist.github.com/fe7f04abbd9538b656c5
+# COMPILE_BUILDPACK_DIR，获取buildpack脚本所在的目录 https://github.com/tchenData/container-info-buildpack
+BUILD_DIR=$1
+CACHE_DIR=$2 
+COMPILE_BUILDPACK_DIR=$(cd $(dirname $0) && cd .. && pwd)
+
 # fail fast
 set -e
 
-# if any command in a pipe fails, kill the script (useful for indent)
-set -o pipefail
+# NOTE: the rest of this script assumes that we're in the cache directory
+cd ${CACHE_DIR}
 
-indent() {
-  while read line; do
-    echo "       ${line}"
-  done
-}
+if [ ! -d "${CACHE_DIR}/Oracle/software" ]; then
+        mkdir -p $CACHE_DIR/Oracle/software
+fi
+ln -s "${CACHE_DIR}" /app
 
-# config
-MONO_VERSION="2.10.8"
-XSP_VERSION="2.10.2"
-
-# s3 packages
-#MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/mono-${MONO_VERSION}.tgz"
-MONO_PACKAGE="http://192.168.2.103:8001/buildpack/mono/mono-2.10.8.tar.gz"
-XSP_PACKAGE="http://192.168.2.103:8001/buildpack/mono/xsp/xsp-2.10.2.tar.bz2"
-
-# important directories: https://gist.github.com/fe7f04abbd9538b656c5
-BUILD_DIR=$1
-CACHE_DIR=$2
-
-# NOTE: the rest of this script assumes that we're in the build directory
-cd ${BUILD_DIR}
-
-# cache may not exist yet
-mkdir -p ${CACHE_DIR}/mono/lib/mono/gac/
-echo ${CACHE_DIR}
-echo "-----> Bundling Mono v${MONO_VERSION}"
-#if [ ! -d "${CACHE_DIR}/mono" ]; then
-  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
-  curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}/mono
-#fi
-cp -r "${CACHE_DIR}/mono" .
-
-ln -s "${CACHE_DIR}/mono" /app
-
-echo "Fetching XSP v${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
-curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar jxvf - -C ${CACHE_DIR}
-cd ${CACHE_DIR}/xsp-2.10.2
-export PKG_CONFIG_PATH=/app/mono/lib/pkgconfig
-export PATH="/app/mono/bin:${PATH}"
-./configure --prefix=/app/mono --with-runtime=/app/mono/bin/mono
-make
-make install
-
-
-
-# find a solution file
-SLN=$(find . -maxdepth 1 -iname "*.sln")
-if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
-  echo "-----> Too many *.sln files"
-  exit 1
+# install bea jrockit jdk
+JROCKIT_JDK_FILE=jrockit-jdk1.6.0_20-R28.1.0-4.0.1-linux-x64.bin
+JROCKIT_JDK_URL="http://192.168.2.103:8001/buildpack/jdk/jrockit-jdk1.6.0_20-R28.1.0-4.0.1-linux-x64.bin"
+if [ ! -d "${CACHE_DIR}/Oracle/jrockit-jdk1.6.0_20" ]; then
+        mkdir -p $CACHE_DIR/Oracle/jrockit-jdk1.6.0_20
+  echo -n "-----> Installing jrockit jdk ${JROCKIT_JDK_FILE}..."
+  curl --silent --location $JDK_JROCKIT_URL 
+  mv $JROCKIT_JDK_FILE $CACHE_DIR/Oracle/software
+  
+  chmod 777 $CACHE_DIR/Oracle/software/$JROCKIT_JDK_FILE
+  ./Oracle/software/$JROCKIT_JDK_FILE -mode=silent -silent_xml=$COMPILE_BUILDPACK_DIR/config/silentForJRockit.xml
+  
+  export JAVA_HOME=/app/Oracle/jrockit-jdk1.6.0_20
+        export JRE_HOME=${JAVA_HOME}/jre
+        export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
+        export PATH=${JAVA_HOME}/bin:$PATH
+  echo " install of jrockit done"
+else
+  echo "-----> jrockit already present"
 fi
 
-# compile an uploaded application
-if [ "${SLN}" != "" ]; then
-  echo "-----> Compiling Mono application"
-
-  # need Mono in its expected location for xbuild to work
-  #ln -s "${CACHE_DIR}/mono" /app
-
+# install WebLogic
+WEBLOGIC_FILE="wls1034_generic.jar"
+WEBLOGIC_PACKAGE="http://192.168.2.103:8001/buildpack/weblogic/wls1034_generic.jar" 
+if [ ! -d "${CACHE_DIR}/Oracle/Middleware_Home/wlserver_10.34" ]; then
+        mkdir -p $CACHE_DIR/Oracle/Middleware_Home/wlserver_10.34
+  echo -n "-----> Installing WebLogic1034 ${WEBLOGIC_FILE}..."
+  echo "Fetching ${WEBLOGIC_FILE} @ ${WEBLOGIC_PACKAGE}"
+  curl --silent --location $WEBLOGIC_PACKAGE 
+  mv $WEBLOGIC_FILE $CACHE_DIR/Oracle/software
+  chmod 777 $CACHE_DIR/Oracle/software/$WEBLOGIC_FILE
+  java -Xmx1024m -jar $CACHE_DIR/Oracle/software/$WEBLOGIC_FILE -mode=silent -silent_xml=$COMPILE_BUILDPACK_DIR/config/silentForWebLogic.xml
   
-  ls /app/mono
-  
-  export PATH="/app/mono/bin:${PATH}"
-
-  #${CACHE_DIR}/bin/xbuild /property:Configuration=Release ${SLN} | indent
-  #xbuild  ${SLN} | indent
+  echo " install of WebLogic1034 done"
+else
+  echo "-----> WebLogic1034 already present"
 fi
+
+#set up WebLogic
+
+
+
+#deploy war：https://github.com/tchenData/buildpack-tomcat/blob/master/bin/compile
+
 
 echo "-----> Build SUCCESS"
