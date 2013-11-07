@@ -5,12 +5,13 @@
 BUILD_DIR=$1
 
 # try to find a suitable directory to start the app from
-#WEB_ROOT="."
+WEB_ROOT="."
+
 
 cat <<EOF
 ---
 config_vars:
-  #PATH: /app/mono/bin:\$PATH
+  PATH: /app/mono/bin:\$PATH
 default_process_types:
-  web: export JAVA_OPTIONS="${JAVA_OPTIONS} -Dweblogic.ListenPort=${VCAP_APP_PORT}";./Oracle/domains/wls/bin/startWebLogic.sh
+  web: export PATH=/app/mono/bin:\$PATH;/app/mono/bin/xsp --nonstop --port \$VCAP_APP_PORT 
 EOF

@@ -1,0 +1,17 @@
+/*Create a domain from a domain template and update it */
+
+read template from "/app/Oracle/Middleware_Home/wlserver_10.34/common/templates/domains/wls.jar";
+ 
+find User "weblogic" as admin;
+set admin.Password "weblogic13";
+create User "user1" as u1;
+set u1.Password "weblogic13";
+assign User "user1" to Group "Deployers";
+
+set ServerStartMode "dev";
+set JavaHome "/app/Oracle/jrockit-jdk1.6.0_20";
+set CreateStartMenu "false";
+ 
+write domain to "/app/Oracle/domains/wls";
+
+close template; 

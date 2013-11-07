@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<domain-template-descriptor>
+ <input-fields>
+   <!--  Installation dir   -->
+   <data-value name="USER_INSTALL_DIR" value="/app/Oracle/jrockit-jdk1.6.0_20" /> 
+   <!-- 
+      Install Public JRE
+        This option is available in Win32 JDK installer 
+   --> 
+   <data-value name="INSTALL_PUBLIC_JRE" value="true" /> 
+   <!-- 
+      Install Java plugin for Internet Explorer (IE)
+        if Internet Explorer is installed on the system.
+        This option is available in Win32 JRE installer.
+        It also works in Win32 JDK installer, but the
+        INSTALL_PUBLIC_JRE option must be "true"
+    --> 
+  <data-value name="REGISTER_PLUGIN_WITH_IE" value="true" /> 
+  <!--
+     Install Java plugin with Netscape and Mozilla web browsers
+       if Netscape and Mozilla are installed on the system.
+       This option is available in Win32 JRE installer.
+       It also works in Win32 JDK installer, but the
+       INSTALL_PUBLIC_JRE option must be "true"
+  --> 
+  <data-value name="REGISTER_PLUGIN_WITH_NS_AND_MOZILLA" value="true" /> 
+
+ </input-fields>
+ </domain-template-descriptor>

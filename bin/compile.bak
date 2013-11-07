@@ -61,6 +61,6 @@ fi
 sh ./Oracle/Middleware_Home/wlserver_10.34/common/bin/config.sh -mode=silent -silent_script=$COMPILE_BUILDPACK_DIR/config/configDomain.xml
 
 #deploy war£ºhttps://github.com/tchenData/buildpack-tomcat/blob/master/bin/compile
-cp $BUILD_DIR/demo.war /app/Oracle/domains/wls/autodeploy
+cp $BUILD_DIR/demo.war 
 
 echo "-----> Build SUCCESS"
